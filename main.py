@@ -4,10 +4,21 @@ import joblib
 import pandas as pd
 import shap
 import numpy as np
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 
 # 1. Initialize App
 app = FastAPI(title="Heart Disease Risk Predictor with SHAP")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins (for testing)
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
 
+
+# app = FastAPI(title="Heart Disease Risk Predictor with SHAP")
 # 2. Load Model & Explainer
 # We load the trained brain once when the server starts
 try:
@@ -64,4 +75,5 @@ def predict_heart_disease(patient: PatientData):
 
 @app.get("/")
 def home():
-    return {"status": "Heart Disease Predictor is Online"}
+    # This serves your HTML file when someone visits the root URL
+    return FileResponse("index.html")

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heart Disease Risk AI</title>
+    <style>
+        :root {
+            --primary: #e63946;
+            --bg: #f1faee;
+            --card: #ffffff;
+            --text: #1d3557;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify_content: center;
+            padding: 20px;
+        }
+        .container {
+            background: var(--card);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 600px;
+        }
+        h1 { text-align: center; color: var(--primary); margin-bottom: 30px; }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        label { font-size: 0.9em; font-weight: bold; margin-bottom: 5px; display: block; }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-sizing: border-box; /* Fixes padding issues */
+        }
+        button {
+            width: 100%;
+            background-color: var(--primary);
+            color: white;
+            padding: 15px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.1em;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background 0.3s;
+        }
+        button:hover { background-color: #d62828; }
+        
+        /* Result Section */
+        #result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            display: none; /* Hidden by default */
+        }
+        .high-risk { background-color: #ffe5e5; border: 1px solid #ffcccc; color: #cc0000; }
+        .low-risk { background-color: #e5ffe5; border: 1px solid #ccffcc; color: #006600; }
+        
+        .explanation-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            font-size: 0.9em;
+        }
+        .bar-container { width: 100px; height: 10px; background: #eee; border-radius: 5px; overflow: hidden; }
+        .bar-fill { height: 100%; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🫀 Heart Risk AI</h1>
+    <form id="predictionForm">
+        <div class="grid">
+            <div><label>Age</label><input type="number" id="age" value="63" required></div>
+            <div><label>Sex (1=M, 0=F)</label><input type="number" id="sex" value="1" required></div>
+            <div><label>Chest Pain (0-3)</label><input type="number" id="cp" value="3" required></div>
+            <div><label>Resting BP</label><input type="number" id="trestbps" value="145" required></div>
+            <div><label>Cholesterol</label><input type="number" id="chol" value="233" required></div>
+            <div><label>Fasting BS (1=True)</label><input type="number" id="fbs" value="1" required></div>
+            <div><label>Rest ECG (0-2)</label><input type="number" id="restecg" value="0" required></div>
+            <div><label>Max Heart Rate</label><input type="number" id="thalach" value="150" required></div>
+            <div><label>Exercise Angina (1=Yes)</label><input type="number" id="exang" value="0" required></div>
+            <div><label>Oldpeak</label><input type="number" id="oldpeak" value="2.3" step="0.1" required></div>
+            <div><label>Slope (0-2)</label><input type="number" id="slope" value="0" required></div>
+            <div><label>Major Vessels (0-3)</label><input type="number" id="ca" value="0" required></div>
+            <div><label>Thal (0-3)</label><input type="number" id="thal" value="1" required></div>
+        </div>
+        <button type="submit">Analyze Risk</button>
+    </form>
+
+    <div id="result">
+        <h2 id="riskText"></h2>
+        <p id="probText"></p>
+        <h3>Why this prediction? (SHAP Analysis)</h3>
+        <div id="shapList"></div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('predictionForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        // 1. Gather Data
+        const formData = {
+            age: parseInt(document.getElementById('age').value),
+            sex: parseInt(document.getElementById('sex').value),
+            cp: parseInt(document.getElementById('cp').value),
+            trestbps: parseInt(document.getElementById('trestbps').value),
+            chol: parseInt(document.getElementById('chol').value),
+            fbs: parseInt(document.getElementById('fbs').value),
+            restecg: parseInt(document.getElementById('restecg').value),
+            thalach: parseInt(document.getElementById('thalach').value),
+            exang: parseInt(document.getElementById('exang').value),
+            oldpeak: parseFloat(document.getElementById('oldpeak').value),
+            slope: parseInt(document.getElementById('slope').value),
+            ca: parseInt(document.getElementById('ca').value),
+            thal: parseInt(document.getElementById('thal').value)
+        };
+
+        // 2. Send to API
+        try {
+const response = await fetch('/predict_risk', {                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+            
+            const data = await response.json();
+            
+            // 3. Display Result
+            const resultDiv = document.getElementById('result');
+            const riskText = document.getElementById('riskText');
+            const probText = document.getElementById('probText');
+            const shapList = document.getElementById('shapList');
+            
+            resultDiv.style.display = 'block';
+            shapList.innerHTML = ''; // Clear previous
+
+            if (data.prediction === 1) {
+                resultDiv.className = 'high-risk';
+                riskText.innerText = "⚠️ High Risk Detected";
+            } else {
+                resultDiv.className = 'low-risk';
+                riskText.innerText = "✅ Low Risk Detected";
+            }
+            
+            probText.innerText = `Probability: ${(data.risk_probability * 100).toFixed(1)}%`;
+
+            // 4. Render SHAP Explanations
+            // Sort by impact (absolute value) to show most important factors first
+            const shapEntries = Object.entries(data.shap_explanation);
+            shapEntries.sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
+
+            // Take top 5 factors
+            shapEntries.slice(0, 5).forEach(([key, value]) => {
+                const item = document.createElement('div');
+                item.className = 'explanation-item';
+                
+                const impact = value > 0 ? "Increases Risk ⬆️" : "Reduces Risk ⬇️";
+                const color = value > 0 ? "red" : "green";
+                
+                item.innerHTML = `
+                    <span><strong>${key}</strong>: ${impact}</span>
+                    <span style="color:${color}; font-weight:bold">${value.toFixed(2)}</span>
+                `;
+                shapList.appendChild(item);
+            });
+
+        } catch (error) {
+            alert("Error connecting to API. Is it running?");
+            console.error(error);
+        }
+    });
+</script>
+
+</body>
+</html>
