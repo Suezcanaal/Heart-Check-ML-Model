@@ -9,6 +9,14 @@ An AI-powered heart disease risk assessment tool that provides explainable predi
 - **REST API**: FastAPI backend with automatic documentation
 - **Web Interface**: Interactive HTML frontend for easy testing
 - **Docker Support**: Containerized deployment ready
+- **Cloud Deployment**: Live on Azure Container Instances
+
+## 🌐 Live Demo
+
+**Try it now**: [http://shap-heart-maritest1.eastus.azurecontainer.io/](http://shap-heart-maritest1.eastus.azurecontainer.io/)
+
+- **API Docs**: [http://shap-heart-maritest1.eastus.azurecontainer.io/docs](http://shap-heart-maritest1.eastus.azurecontainer.io/docs)
+- **Web Interface**: [http://shap-heart-maritest1.eastus.azurecontainer.io/index.html](http://shap-heart-maritest1.eastus.azurecontainer.io/index.html)
 
 ## 🏗️ Architecture
 
@@ -75,28 +83,57 @@ docker build -t heart-disease-api .
 docker run -p 8000:8000 heart-disease-api
 ```
 
+### Azure Container Instances Deployment
+
+The application is deployed on **Azure Container Instances (ACI)** for scalable cloud hosting:
+
+```bash
+# Azure CLI deployment example
+az container create \
+  --resource-group heart-disease-rg \
+  --name shap-heart-maritest1 \
+  --image your-registry/heart-disease-api:latest \
+  --dns-name-label shap-heart-maritest1 \
+  --location eastus \
+  --ports 8000 \
+  --cpu 1 \
+  --memory 2
+```
+
+**Azure Benefits**:
+- **Serverless**: No VM management required
+- **Auto-scaling**: Handles traffic spikes automatically
+- **Cost-effective**: Pay only for running time
+- **Global**: Deploy in multiple Azure regions
+- **Secure**: Built-in network isolation
+
 ## 🔧 Usage
 
 ### API Testing
 ```bash
-# Health check
-curl http://localhost:8000/
+# Health check (Live)
+curl http://shap-heart-maritest1.eastus.azurecontainer.io/
 
-# Prediction request
-curl -X POST "http://localhost:8000/predict_risk" \
+# Prediction request (Live)
+curl -X POST "http://shap-heart-maritest1.eastus.azurecontainer.io/predict_risk" \
   -H "Content-Type: application/json" \
   -d '{
     "age": 63, "sex": 1, "cp": 3, "trestbps": 145,
     "chol": 233, "fbs": 1, "restecg": 0, "thalach": 150,
     "exang": 0, "oldpeak": 2.3, "slope": 0, "ca": 0, "thal": 1
   }'
+
+# Local testing
+curl http://localhost:8000/predict_risk
 ```
 
 ### Web Interface
-1. Open `http://localhost:8000/index.html`
-2. Fill in patient data
-3. Click "Analyze Risk"
-4. View prediction + SHAP explanations
+**Local**: `http://localhost:8000/index.html`  
+**Live Demo**: [http://shap-heart-maritest1.eastus.azurecontainer.io/index.html](http://shap-heart-maritest1.eastus.azurecontainer.io/index.html)
+
+1. Fill in patient data
+2. Click "Analyze Risk"
+3. View prediction + SHAP explanations
 
 ## 📈 API Response Format
 
