@@ -129,7 +129,7 @@ curl http://localhost:8000/predict_risk
 
 ### Web Interface
 **Local**: `http://localhost:8000/index.html`  
-**Live Demo**: [http://shap-heart-maritest1.eastus.azurecontainer.io/index.html](http://shap-heart-maritest1.eastus.azurecontainer.io/index.html)
+**Live Demo**:**Live Demo**: [http://shap-heart-maritest1.eastus.azurecontainer.io]([http://shap-heart-maritest1.eastus.azurecontainer.io/index.html](http://shap-heart-maritest1.eastus.azurecontainer.io))
 
 1. Fill in patient data
 2. Click "Analyze Risk"
